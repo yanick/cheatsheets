@@ -1,5 +1,7 @@
 #!/usr/bin/env perl
 
+package MkdCheatsheet;
+
 use 5.20.0;
 
 use strict;
@@ -9,21 +11,38 @@ use Text::MultiMarkdown qw/ markdown /;
 use Path::Tiny;
 use Web::Query;
 
-convert($_) for @ARGV;
+use MooseX::App::Simple;
 
-sub convert {
-    my $file = shift;
+parameter 'src' => (
+    is => 'ro',
+    isa => 'Str',
+    required => 1,
+    documentation => 'markdown file to convert',
+);
+
+option pdf => (
+    is => 'ro',
+    isa => 'Bool',
+    default => 0,
+    documentation => 'generate pdf file',
+);
+
+sub run {
+    my $self = shift;
+
+    my $file = $self->src;
 
     my $html = markdown( path($file)->slurp );
 
-    my $dest = path($file =~ s/\..*?$/.html/r);
+    my $dest = path( path($file =~ s/\..*?$/.html/r)->basename );
 
     $dest->spew( html_page($html) );
 
+    return unless $self->pdf;
+
     system '/usr/bin/prince', $dest;
 
-    say $dest;
-
+    exec 'pdfbooklet', path( $dest =~ s/\.html$/.pdf/r );
 }
 
 sub html_page {
@@ -50,7 +69,7 @@ sub html_page {
 
     $content = $content->as_html;
 
-    my $style = my_style();
+    my $style = path('style/style.css')->slurp;
 
     return <<"END";
 <html>
@@ -67,120 +86,4 @@ END
 
 }
 
-sub my_style { return <<'END';
-
-@media print{
-    @page {
-        size: 5.5in 8.5in;
-        margin: 1cm;
-        margin-top: 0.75cm;
-        margin-left: 0cm;
-        margin-right: 0cm;
-        padding: 0cm;
-        padding-left: 0cm;
-      //  @bottom { content: flow(footer) };
-    }
-
-    @page :first {
-        margin-top: 0.25cm;
-        @top-left { content: "" }
-        @top-right { content: "" }
-    }
-
-    @page {
-        @top-left {
-            content: flow(header);
-        }
-        @top-right {
-            content: flow(subheader,start);
-        }
-    }
-
-    @page :right {
-        @bottom-right {
-            content: counter(page) "/" counter(pages)
-        };
-        padding-left: 2cm;
-        padding-right: 1cm;
-    }
-    @page :left {
-        @bottom-left {
-            content: counter(page) "/" counter(pages)
-        };
-        padding-left: 1cm;
-        padding-right: 2cm;
-    }
-
-}
-
-div.footer { 
-    text-align: right;
-    border-top: solid 1px black;
-   // flow: static(footer);
-    font-style: italic;
-}
-
-div.header { flow: static(header); }
-.subheader { flow: static(subheader); font-style: italic; text-align: right; }
-
-.breaker { page-break-before: always; }
-
-h1 {
-    text-align: right;
-    border-bottom: 1px black solid;
-    font-size: large;
-}
-
-h2 {
-    background-color: lightblue;
-    font-size: larger;
-}
-
-h2:nth-of-type(1) {
-    border-top: 0px;
-}
-
-body, table {
-    font-family: sans-serif;
-    font-size: 10pt;
-//    column-count:2;
-//    -moz-column-count:2; /* Firefox */
-//    -webkit-column-count:2; /* Safari and Chrome */
-}
-
-
-tr {
-    vertical-align: top;
-}
-
-th {
-    border-bottom: solid 1px black;
-    padding: 0em 1em;
-    text-align: left;
-}
-
-td {
-    padding: 0.25em 1em;
-    vertical-align: top;
-}
-
-tbody:nth-child(even) {
-//    background-color: lightgrey;
-}
-
-table {
-    border-spacing: 0px;
-//    margin: 0 2em;
-}
-
-td, th {
-    border-left: 1px solid black;
-}
-
-td:nth-child(1), th:nth-child(1) {
-    border-left: 0px;
-}
-
-
-END
-}
+__PACKAGE__->new_with_options->run unless caller;
