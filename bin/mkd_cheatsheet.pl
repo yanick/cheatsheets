@@ -21,10 +21,18 @@ parameter 'src' => (
 );
 
 option pdf => (
+    is            => 'rw',
+    isa           => 'Bool',
+    default       => 0,
+    documentation => 'generate pdf file',
+);
+
+option booklet => (
     is => 'ro',
     isa => 'Bool',
     default => 0,
-    documentation => 'generate pdf file',
+    trigger => sub { $_[0]->pdf(1) },
+    documentation => 're-arrange the pages to be booklet-printable',
 );
 
 sub run {
@@ -36,17 +44,45 @@ sub run {
 
     my $dest = path( path($file =~ s/\..*?$/.html/r)->basename );
 
-    $dest->spew( html_page($html) );
+    $dest->spew( $self->html_page($html) );
 
     return unless $self->pdf;
 
     system '/usr/bin/prince', $dest;
 
-    exec 'pdfbooklet', path( $dest =~ s/\.html$/.pdf/r );
+    $self->make_booklet;
+}
+
+sub make_booklet {
+    my $self = shift;
+
+    return unless $self->booklet;
+
+    my $file = path($self->src)->basename;
+    $file =~ s/\.mkd/\.pdf/;
+    my $bf = $file =~ s/(?=\.pdf)/_booklet/r;
+
+    `pdftk $file dump_data` =~ /NumberOfPages:\s*(\d+)/ or die;
+
+    my $pages = $1;
+
+    my @pages = 1..4*int($pages/4);
+
+    my @new;
+
+    while( @pages >= 4) {
+        push @new, pop @pages, shift @pages, shift @pages, pop @pages;
+    }
+
+    my $temp = Path::Tiny->tempfile . '.pdf';
+
+    system 'pdftk', $file, 'cat', @new, "output", $temp;
+
+    system 'pdfnup', $temp, '--paper', 'letter', '--outfile', $bf;
 }
 
 sub html_page {
-    my $content = shift;
+    my( $self, $content ) = @_;
 
     $content = Web::Query->new("<div>$content</div>", { indent => "  " });
 
@@ -65,11 +101,22 @@ sub html_page {
         $_->html( $_->html =~ s/^\s*\*//r );
     });
 
+    $content->find('tr')->filter(sub{
+        my $sumfin = 0;
+        $_->find('td')->each(sub{
+                $sumfin = 1 if $_->html and $_->html !~ /^\s*-+\s*$/;
+        });
+        return not $sumfin;
+    })->remove;
+
     my $title = $content->find('h1')->html;
 
     $content = $content->as_html;
 
     my $style = path('style/style.css')->slurp;
+
+    my $trailing_pages = 
+        '<div style="page-break-after: always"></div>' x (3 * $self->booklet);
 
     return <<"END";
 <html>
@@ -80,6 +127,7 @@ sub html_page {
 </head>
 <body>
     $content 
+    $trailing_pages
 </body>
 </html>
 END
