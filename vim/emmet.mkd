@@ -1,0 +1,132 @@
+# Vim Emmet 
+
+## keys 
+
+| | |
+| -- | -- |
+| &lt;C-Y&gt;,         | expand abbreviation      |
+| &lt;visual&gt;&lt;C-Y&gt;, | wrap abbreviation        |
+| &lt;C-Y&gt;d         | balance tag inward       |
+| &lt;C-Y&gt;D         | balance tag outward      |
+| &lt;C-Y&gt;n         | goto next edit point     |
+| &lt;C-Y&gt;N         | goto previous edit point |
+| &lt;C-Y&gt;i         | update image size        |
+| &lt;C-Y&gt;m         | merge ?                  |
+| &lt;C-Y&gt;k         | remove tag               |
+| &lt;C-Y&gt;j         | join/split tag           |
+| &lt;C-Y&gt;/         | toggle comment           |
+| &lt;C-Y&gt;a         | anchor from url          |
+| &lt;C-Y&gt;A         | quoted text from url     |
+| &lt;C-Y&gt;c         | pretty code              |
+| lorem&lt;C-Y&gt;,    | lorem ipsum              |
+
+
+## syntax 
+
+```
+div#page>div.logo+ul#navigation>li*5>a
+```
+
+    <div id="page">
+        <div class="logo"></div>
+        <ul id="navigation">
+            <li><a href=""></a></li>
+            <li><a href=""></a></li>
+            <li><a href=""></a></li>
+            <li><a href=""></a></li>
+            <li><a href=""></a></li>
+        </ul>
+    </div>
+
+### Child 
+
+`div>ul>li` 
+
+    <div>
+        <ul>
+            <li></li>
+        </ul>
+    </div>
+
+### Sibling 
+
+`div+p+bq`
+
+    <div></div>
+    <p></p>
+    <blockquote></blockquote>
+
+### Climb-up 
+
+`div>p>span^bq`
+
+    <div>
+        <p>
+            <span></span>
+            <span></span>
+        </p>
+        <blockquote></blockquote>
+    </div>
+
+### Multiplication 
+
+`ul>li*3`
+
+    <ul>
+        <li></li>
+        <li></li>
+        <li></li>
+    </ul>
+
+### * Grouping 
+
+`div>(p+bq)*2`
+
+    <div>
+        <p></p>
+        <blockquote></blockquote>
+        <p></p>
+        <blockquote></blockquote>
+    </div>
+
+### * Attributes operators 
+
+#### Id 
+
+`div#header`
+
+    <div id="header"></div>
+
+#### Class 
+
+`div.class`
+
+    <div class="class"></div>
+
+#### General attribute 
+
+`div[title="something" colspan]`
+
+    <div title="something" colspan=""></div>
+
+
+#### Item numbering 
+
+With `*`. Many `$` pad with zeros.
+`@-` reverses direction. `@N` changes the base.
+
+`ul>li.item$@-*2`
+
+    <ul>
+        <li class="item2"></li>
+        <li class="item1"></li>
+    </ul>
+
+#### Text 
+
+`a{click me}`
+    
+    <a href="">click me</a>
+    
+
+
