@@ -2,8 +2,8 @@
 
 ## keys 
 
-| | |
-| -- | -- |
+|     |     |
+| --- | --- |
 | &lt;C-Y&gt;,         | expand abbreviation      |
 | &lt;visual&gt;&lt;C-Y&gt;, | wrap abbreviation        |
 | &lt;C-Y&gt;d         | balance tag inward       |
